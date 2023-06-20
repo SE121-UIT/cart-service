@@ -1,3 +1,5 @@
+import createError from 'http-errors';
+
 //////////////////////////////////////
 /// Getting the state from events
 //////////////////////////////////////
@@ -23,7 +25,7 @@ export const StreamAggregator =
       if (!event) continue;
       currentState = when(currentState, event);
     }
-    if (currentState == null) throw 'oh no';
+    if (currentState == null) throw createError.InternalServerError('Event not sync');
     return currentState;
   };
 

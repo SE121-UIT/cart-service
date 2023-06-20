@@ -1,6 +1,7 @@
 //////////////////////////////////////
 /// ShoppingCartDetails projection
 //////////////////////////////////////
+import createError from 'http-errors';
 
 import {
   getMongoCollection,
@@ -54,7 +55,7 @@ export const projectToShoppingCartItem = (
       return projectShoppingCartConfirmed(event, streamRevision);
     default: {
       const _: never = event;
-      throw ShoppingCartErrors.UNKNOWN_EVENT_TYPE;
+      throw createError.InternalServerError(ShoppingCartErrors.UNKNOWN_EVENT_TYPE);
     }
   }
 };

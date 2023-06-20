@@ -1,3 +1,5 @@
+import createError from 'http-errors';
+
 //////////////////////////////////////
 /// MongoDB
 //////////////////////////////////////
@@ -53,7 +55,7 @@ export const assertUpdated = async (update: () => Promise<UpdateResult>): Promis
   const result = await update();
 
   if (result.modifiedCount === 0) {
-    throw MongoDBErrors.FAILED_TO_UPDATE_DOCUMENT;
+    throw createError.InternalServerError(MongoDBErrors.FAILED_TO_UPDATE_DOCUMENT);
   }
 
   return result;
@@ -63,7 +65,7 @@ export const assertFound = async <T>(find: () => Promise<T | null>): Promise<T> 
   const result = await find();
 
   if (result === null) {
-    throw MongoDBErrors.DOCUMENT_NOT_FOUND;
+    throw createError.NotFound(MongoDBErrors.DOCUMENT_NOT_FOUND);
   }
 
   return result;

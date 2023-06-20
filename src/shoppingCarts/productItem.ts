@@ -1,3 +1,5 @@
+import createError from 'http-errors';
+
 //////////////////////////////////////
 /// Product Items
 //////////////////////////////////////
@@ -56,7 +58,7 @@ export const assertProductItemExists = (
   const current = findProductItem(productItems, productId);
 
   if (!current || current.quantity < quantity) {
-    throw ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND;
+    throw createError.Conflict(ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND);
   }
 
   return current;

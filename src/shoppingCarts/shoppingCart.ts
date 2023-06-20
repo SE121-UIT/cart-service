@@ -1,3 +1,5 @@
+import createError from 'http-errors';
+
 //////////////////////////////////////
 /// Shopping Carts
 //////////////////////////////////////
@@ -97,7 +99,7 @@ export const toShoppingCartStreamName = (shoppingCartId: string) =>
 
 export const assertShoppingCartIsNotClosed = (shoppingCart: ShoppingCart) => {
   if (shoppingCart.status !== ShoppingCartStatus.Opened) {
-    throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+    throw createError.Conflict(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
   }
 };
 
@@ -108,7 +110,7 @@ export const assertShoppingCartIsNotClosed = (shoppingCart: ShoppingCart) => {
 export const getShoppingCart = StreamAggregator<ShoppingCart, ShoppingCartEvent>(
   (currentState, event) => {
     if (event.type === 'shopping-cart-opened') {
-      if (currentState != null) throw ShoppingCartErrors.OPENED_EXISTING_CART;
+      if (currentState != null) throw createError.Conflict(ShoppingCartErrors.OPENED_EXISTING_CART);
       return {
         id: event.data.shoppingCartId,
         clientId: event.data.clientId,
@@ -118,7 +120,7 @@ export const getShoppingCart = StreamAggregator<ShoppingCart, ShoppingCartEvent>
       };
     }
 
-    if (currentState == null) throw ShoppingCartErrors.CART_NOT_FOUND;
+    if (currentState == null) throw createError.NotFound(ShoppingCartErrors.CART_NOT_FOUND);
 
     switch (event.type) {
       case 'product-item-added-to-shopping-cart':
@@ -139,7 +141,7 @@ export const getShoppingCart = StreamAggregator<ShoppingCart, ShoppingCartEvent>
         };
       default: {
         const _: never = event;
-        throw ShoppingCartErrors.UNKNOWN_EVENT_TYPE;
+        throw createError.InternalServerError(ShoppingCartErrors.UNKNOWN_EVENT_TYPE);
       }
     }
   }

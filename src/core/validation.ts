@@ -1,3 +1,5 @@
+import createError from 'http-errors';
+
 //////////////////////////////////////
 /// Validation
 //////////////////////////////////////
@@ -10,14 +12,14 @@ export const enum ValidationErrors {
 
 export const assertNotEmptyString = (value: unknown): string => {
   if (typeof value !== 'string' || value.length === 0) {
-    throw ValidationErrors.NOT_A_NONEMPTY_STRING;
+    throw createError.BadRequest(ValidationErrors.NOT_A_NONEMPTY_STRING);
   }
   return value;
 };
 
 export const assertPositiveNumber = (value: unknown): number => {
   if (typeof value !== 'number' || value <= 0) {
-    throw ValidationErrors.NOT_A_POSITIVE_NUMBER;
+    throw createError.BadRequest(ValidationErrors.NOT_A_POSITIVE_NUMBER);
   }
   return value;
 };
@@ -25,7 +27,7 @@ export const assertPositiveNumber = (value: unknown): number => {
 export const assertUnsignedBigInt = (value: string): bigint => {
   const number = BigInt(value);
   if (number < 0) {
-    throw ValidationErrors.NOT_AN_UNSIGNED_BIGINT;
+    throw createError.BadRequest(ValidationErrors.NOT_AN_UNSIGNED_BIGINT);
   }
   return number;
 };

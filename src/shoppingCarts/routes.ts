@@ -17,13 +17,19 @@ import { requestQuantityCheck } from '../services/cartService.service';
 //////////////////////////////////////
 /// Routes
 //////////////////////////////////////
+export interface ResJSON {
+  statusCode: number;
+  message: string;
+  data?: Object | null;
+  error?: string;
+}
 
 export const router = Router();
 
 // Open Shopping cart
 router.post(
   '/clients/:clientId/shopping-carts/',
-  async (request: Request, response: Response, next: NextFunction) => {
+  async (request: Request, response: Response<ResJSON>, next: NextFunction) => {
     try {
       const shoppingCartId = uuid();
       const streamName = toShoppingCartStreamName(shoppingCartId);
@@ -52,7 +58,7 @@ type AddProductItemRequest = Request<
 
 router.post(
   '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
-  async (request: AddProductItemRequest, response: Response, next: NextFunction) => {
+  async (request: AddProductItemRequest, response: Response<ResJSON>, next: NextFunction) => {
     try {
       const shoppingCartId = assertNotEmptyString(request.params.shoppingCartId);
       const streamName = toShoppingCartStreamName(shoppingCartId);
@@ -73,7 +79,10 @@ router.post(
       );
 
       response.set('ETag', toWeakETag(result.nextExpectedRevision));
-      response.sendStatus(200);
+      response.status(200).json({
+        statusCode: 200,
+        message: 'Success',
+      });
     } catch (error) {
       next(error);
     }
@@ -83,7 +92,7 @@ router.post(
 // Remove Product Item
 router.delete(
   '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
-  async (request: Request, response: Response, next: NextFunction) => {
+  async (request: Request, response: Response<ResJSON>, next: NextFunction) => {
     try {
       const shoppingCartId = assertNotEmptyString(request.params.shoppingCartId);
       const streamName = toShoppingCartStreamName(shoppingCartId);
@@ -102,7 +111,10 @@ router.delete(
       );
 
       response.set('ETag', toWeakETag(result.nextExpectedRevision));
-      response.sendStatus(200);
+      response.status(200).json({
+        statusCode: 200,
+        message: 'Success',
+      });
     } catch (error) {
       next(error);
     }
@@ -112,7 +124,7 @@ router.delete(
 // Confirm Shopping Cart
 router.put(
   '/clients/:clientId/shopping-carts/:shoppingCartId',
-  async (request: Request, response: Response, next: NextFunction) => {
+  async (request: Request, response: Response<ResJSON>, next: NextFunction) => {
     try {
       const shoppingCartId = assertNotEmptyString(request.params.shoppingCartId);
       const streamName = toShoppingCartStreamName(shoppingCartId);
@@ -127,7 +139,10 @@ router.put(
       );
 
       response.set('ETag', toWeakETag(result.nextExpectedRevision));
-      response.sendStatus(200);
+      response.status(200).json({
+        statusCode: 200,
+        message: 'Success',
+      });
     } catch (error) {
       next(error);
     }
@@ -136,7 +151,7 @@ router.put(
 
 router.get(
   '/clients/:clientId/shopping-carts/:shoppingCartId',
-  async (request: Request, response: Response, next: NextFunction) => {
+  async (request: Request, response: Response<ResJSON>, next: NextFunction) => {
     try {
       const collection = await getShoppingCartsCollection();
 
@@ -150,7 +165,11 @@ router.get(
       }
 
       response.set('ETag', toWeakETag(result.revision));
-      response.send(result);
+      response.status(200).json({
+        statusCode: 200,
+        message: 'Success',
+        data: result,
+      });
     } catch (error) {
       next(error);
     }
