@@ -20,7 +20,6 @@ import {
   ShoppingCartOpened,
   ShoppingCartStatus,
 } from './shoppingCart';
-import { createChannel, publishMessage } from '../core/messageBroker';
 
 export const getShoppingCartsCollection = () =>
   getMongoCollection<ShoppingCartDetails>('shoppingCartDetails');
@@ -161,8 +160,6 @@ export const projectShoppingCartConfirmed = async (
   streamRevision: number
 ): Promise<void> => {
   const shoppingCarts = await getShoppingCartsCollection();
-  const channel = await createChannel();
-
   const lastRevision = streamRevision - 1;
 
   const { revision } = await retryIfNotFound(() =>
@@ -193,6 +190,4 @@ export const projectShoppingCartConfirmed = async (
     },
     { upsert: false }
   );
-
-  publishMessage(channel, 'INVENTORY_SERVICE', 'hehe');
 };

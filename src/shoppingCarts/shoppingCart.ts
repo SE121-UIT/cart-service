@@ -12,7 +12,11 @@ import {
   ProductItem,
   removeProductItem,
 } from './productItem';
-import { assertProductIdExist } from '../services/cartService.service';
+import {
+  assertConfirmCart,
+  assertProductIdExist,
+  requestConfirmCart,
+} from '../services/cartService.service';
 
 //////////////////////////////////////
 /// Events
@@ -250,6 +254,7 @@ export const confirmShoppingCart = async (
     const shoppingCart = await getShoppingCart(events);
 
     assertShoppingCartIsNotClosed(shoppingCart);
+    await assertConfirmCart(shoppingCart.productItems);
 
     return {
       type: 'shopping-cart-confirmed',

@@ -1,42 +1,7 @@
 import { createChannel } from '../core/messageBroker';
 import { generateCorrelationId } from '../utils/generate';
 import createError from 'http-errors';
-
-export const requestQuantityCheck = async (productId: string): Promise<number> => {
-  return new Promise(async (resolve, reject) => {
-    const channel = await createChannel();
-
-    await channel.assertExchange('ONLINE_SHOPPING_CART', 'direct', {
-      durable: true,
-    });
-    const correlationId = generateCorrelationId();
-
-    const q = await channel.assertQueue('', {
-      exclusive: true,
-    });
-
-    channel.bindQueue(q.queue, 'ONLINE_SHOPPING_CART', 'INVENTORY_SERVICE');
-    channel.consume(
-      q.queue,
-      (msg) => {
-        if (msg?.properties.correlationId === correlationId) {
-          const result = JSON.parse(msg.content.toString());
-          console.log(
-            `Received quantity check result for product ${result.productId}: ${result.quantity}`
-          );
-          resolve(result.quantity);
-        }
-      },
-      { noAck: true }
-    );
-
-    const message = JSON.stringify({ productId });
-    channel.publish('ONLINE_SHOPPING_CART', 'INVENTORY_SERVICE', Buffer.from(message), {
-      correlationId,
-      replyTo: q.queue,
-    });
-  });
-};
+import { ProductItem } from '../shoppingCarts/productItem';
 
 export enum BusinessErrors {
   PRODUCTID_NOT_EXIST = 'PRODUCTID_NOT_EXIST',
@@ -47,9 +12,28 @@ export type EventBroker = {
   data: object | undefined;
 };
 
+export type ProductIdCheckEvent = EventBroker & {
+  data: {
+    productId: string;
+  };
+};
+
+export type CartConfirmationEvent = EventBroker & {
+  data: {
+    productItems: ProductItem[];
+  };
+};
+
 export type ProductIdCheckReplyEvent = EventBroker & {
   data: {
     productId: string;
+    result: boolean;
+  };
+};
+
+export type CartConfirmationReplyEvent = EventBroker & {
+  data: {
+    message: string;
     result: boolean;
   };
 };
@@ -91,10 +75,57 @@ export const requestProductIdExist = async (productId: string): Promise<boolean>
       { noAck: true }
     );
 
-    const payload: EventBroker = {
+    const payload: ProductIdCheckEvent = {
       name: EventTypeBroker.PRODUCT_ID_CHECK,
       data: {
         productId,
+      },
+    };
+
+    const message = JSON.stringify(payload);
+    channel.publish('ONLINE_SHOPPING_CART', 'INVENTORY_SERVICE', Buffer.from(message), {
+      correlationId,
+      replyTo: q.queue,
+    });
+  });
+};
+
+export const requestConfirmCart = async (
+  productItems: ProductItem[]
+): Promise<{ message: string; result: boolean }> => {
+  return new Promise(async (resolve, reject) => {
+    const channel = await createChannel();
+
+    await channel.assertExchange('ONLINE_SHOPPING_CART', 'direct', {
+      durable: true,
+    });
+    const correlationId = generateCorrelationId();
+
+    const q = await channel.assertQueue('', {
+      exclusive: true,
+    });
+
+    channel.bindQueue(q.queue, 'ONLINE_SHOPPING_CART', 'INVENTORY_SERVICE');
+    channel.consume(
+      q.queue,
+      (msg) => {
+        if (msg?.content) {
+          if (msg?.properties.correlationId === correlationId) {
+            const eventData: CartConfirmationReplyEvent = JSON.parse(msg.content.toString());
+            if (eventData.name === EventTypeBroker.CART_CONFIRMATION_REPLY) {
+              const result = eventData.data;
+              resolve(result);
+            }
+          }
+        }
+      },
+      { noAck: true }
+    );
+
+    const payload: CartConfirmationEvent = {
+      name: EventTypeBroker.CART_CONFIRMATION,
+      data: {
+        productItems,
       },
     };
 
@@ -110,5 +141,12 @@ export const assertProductIdExist = async (productId: string) => {
   const isExist = await requestProductIdExist(productId);
   if (!isExist) {
     throw createError.NotFound(BusinessErrors.PRODUCTID_NOT_EXIST);
+  }
+};
+
+export const assertConfirmCart = async (productItems: ProductItem[]): Promise<void> => {
+  const { message, result } = await requestConfirmCart(productItems);
+  if (!result) {
+    throw createError.Conflict(message);
   }
 };
