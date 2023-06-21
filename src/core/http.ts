@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { assertUnsignedBigInt } from './validation';
-import { ResJSON } from 'src/shoppingCarts/routes';
+import { ResJSON } from '../shoppingCarts/routes';
 import createError from 'http-errors';
 
 //////////////////////////////////////

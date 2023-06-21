@@ -3,7 +3,7 @@ import { v4 as uuid } from 'uuid';
 import { create, update } from '../core/commandHandling';
 import { toWeakETag, sendCreated, getExpectedRevisionFromETag } from '../core/http';
 import { getEventStore } from '../core/streams';
-import { assertNotEmptyString, assertPositiveNumber } from '../core/validation';
+import { assertNotEmptyString, assertPositiveNumber, assertUuid } from '../core/validation';
 import {
   toShoppingCartStreamName,
   openShoppingCart,
@@ -12,7 +12,6 @@ import {
   confirmShoppingCart,
 } from './shoppingCart';
 import { getShoppingCartsCollection } from './shoppingCartDetails';
-import { requestQuantityCheck } from '../services/cartService.service';
 
 //////////////////////////////////////
 /// Routes
@@ -63,15 +62,13 @@ router.post(
       const shoppingCartId = assertNotEmptyString(request.params.shoppingCartId);
       const streamName = toShoppingCartStreamName(shoppingCartId);
       const expectedRevision = getExpectedRevisionFromETag(request);
-      const productQuantity = await requestQuantityCheck('abc');
-      console.log(productQuantity);
 
       const result = await update(getEventStore(), addProductItemToShoppingCart)(
         streamName,
         {
           shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
           productItem: {
-            productId: assertNotEmptyString(request.body.productId),
+            productId: assertUuid(assertNotEmptyString(request.body.productId)),
             quantity: assertPositiveNumber(request.body.quantity),
           },
         },
@@ -103,7 +100,7 @@ router.delete(
         {
           shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
           productItem: {
-            productId: assertNotEmptyString(request.body.productId),
+            productId: assertUuid(assertNotEmptyString(request.body.productId)),
             quantity: assertPositiveNumber(request.body.quantity),
           },
         },

@@ -1,7 +1,7 @@
 import express, { Application, Router, NextFunction, Request, Response } from 'express';
 import http from 'http';
 import createError, { HttpError } from 'http-errors';
-import { ResJSON } from 'src/shoppingCarts/routes';
+import { ResJSON } from '../shoppingCarts/routes';
 
 export const startAPI = (router: Router) => {
   const app: Application = express();
@@ -20,7 +20,7 @@ export const startAPI = (router: Router) => {
     next(createError.NotFound('This route does not exist.'));
   });
 
-  app.use((err: HttpError, req: Request, res: Response<ResJSON>) => {
+  app.use((err: HttpError, req: Request, res: Response<ResJSON>, next: NextFunction) => {
     res.status(err.statusCode || 500).json({
       statusCode: err.statusCode || 500,
       message: err.message,

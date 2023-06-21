@@ -12,6 +12,7 @@ import {
   ProductItem,
   removeProductItem,
 } from './productItem';
+import { assertProductIdExist } from '../services/cartService.service';
 
 //////////////////////////////////////
 /// Events
@@ -183,17 +184,22 @@ export const addProductItemToShoppingCart = async (
   events: StreamingRead<ResolvedEvent<ShoppingCartEvent>>,
   { shoppingCartId, productItem }: AddProductItemToShoppingCart
 ): Promise<ProductItemAddedToShoppingCart> => {
-  const shoppingCart = await getShoppingCart(events);
+  try {
+    const shoppingCart = await getShoppingCart(events);
 
-  assertShoppingCartIsNotClosed(shoppingCart);
+    assertShoppingCartIsNotClosed(shoppingCart);
+    await assertProductIdExist(productItem.productId);
 
-  return {
-    type: 'product-item-added-to-shopping-cart',
-    data: {
-      shoppingCartId,
-      productItem,
-    },
-  };
+    return {
+      type: 'product-item-added-to-shopping-cart',
+      data: {
+        shoppingCartId,
+        productItem,
+      },
+    };
+  } catch (err) {
+    throw err;
+  }
 };
 
 //////////////////////////////////////
@@ -209,19 +215,23 @@ export const removeProductItemFromShoppingCart = async (
   events: StreamingRead<ResolvedEvent<ShoppingCartEvent>>,
   { shoppingCartId, productItem }: RemoveProductItemFromShoppingCart
 ): Promise<ProductItemRemovedFromShoppingCart> => {
-  const shoppingCart = await getShoppingCart(events);
+  try {
+    const shoppingCart = await getShoppingCart(events);
 
-  assertShoppingCartIsNotClosed(shoppingCart);
+    assertShoppingCartIsNotClosed(shoppingCart);
+    await assertProductIdExist(productItem.productId);
+    assertProductItemExists(shoppingCart.productItems, productItem);
 
-  assertProductItemExists(shoppingCart.productItems, productItem);
-
-  return {
-    type: 'product-item-removed-from-shopping-cart',
-    data: {
-      shoppingCartId,
-      productItem,
-    },
-  };
+    return {
+      type: 'product-item-removed-from-shopping-cart',
+      data: {
+        shoppingCartId,
+        productItem,
+      },
+    };
+  } catch (err) {
+    throw err;
+  }
 };
 
 //////////////////////////////////////
@@ -236,15 +246,19 @@ export const confirmShoppingCart = async (
   events: StreamingRead<ResolvedEvent<ShoppingCartEvent>>,
   { shoppingCartId }: ConfirmShoppingCart
 ): Promise<ShoppingCartConfirmed> => {
-  const shoppingCart = await getShoppingCart(events);
+  try {
+    const shoppingCart = await getShoppingCart(events);
 
-  assertShoppingCartIsNotClosed(shoppingCart);
+    assertShoppingCartIsNotClosed(shoppingCart);
 
-  return {
-    type: 'shopping-cart-confirmed',
-    data: {
-      shoppingCartId,
-      confirmedAt: new Date().toJSON(),
-    },
-  };
+    return {
+      type: 'shopping-cart-confirmed',
+      data: {
+        shoppingCartId,
+        confirmedAt: new Date().toJSON(),
+      },
+    };
+  } catch (err) {
+    throw err;
+  }
 };

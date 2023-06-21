@@ -8,6 +8,7 @@ export const enum ValidationErrors {
   NOT_A_NONEMPTY_STRING = 'NOT_A_NONEMPTY_STRING',
   NOT_A_POSITIVE_NUMBER = 'NOT_A_POSITIVE_NUMBER',
   NOT_AN_UNSIGNED_BIGINT = 'NOT_AN_UNSIGNED_BIGINT',
+  NOT_AN_UUID = 'NOT_AN_UUID',
 }
 
 export const assertNotEmptyString = (value: unknown): string => {
@@ -30,4 +31,15 @@ export const assertUnsignedBigInt = (value: string): bigint => {
     throw createError.BadRequest(ValidationErrors.NOT_AN_UNSIGNED_BIGINT);
   }
   return number;
+};
+
+export const assertUuid = (uuid: string): string => {
+  const isUuidValid =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid);
+
+  if (!isUuidValid) {
+    throw createError.BadRequest(ValidationErrors.NOT_AN_UUID);
+  }
+
+  return uuid;
 };
