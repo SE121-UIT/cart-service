@@ -1,10 +1,56 @@
 version: '3'
 
 services:
+  inventory-service:
+    container_name: inventory-service
+    image: inventory-service:latest
+    build:
+      context: ../inventory-service
+      dockerfile: Dockerfile
+    ports:
+      - '5000:5000'
+    depends_on:
+      - esdb
+      - postgres
+      - rabbitmq
+    environment:
+      - PG_HOST=postgres
+      - PG_USER=postgres
+      - PG_PASSWORD=changeme
+      - PG_PORT=5432
+      - PG_DATABASE=inventory
+      - EVENT_STORE_DB_URL=esdb://esdb:2113?tls=false
+      - RABBIT_MQ_URL=amqp://rabbitmq:5672
+    restart: always
+    networks:
+      - esdb_network
+
+  cart-service:
+    container_name: cart-service
+    image: cart-service:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '4999:4999'
+    depends_on:
+      - esdb
+      - mongodb
+      - inventory-service
+      - rabbitmq
+    restart: always
+    environment:
+      - EVENT_STORE_DB_URL=esdb://esdb:2113?tls=false
+      - MONGO_DB_URL=mongodb://mongodb:27017/?directConnection=true
+      - RABBIT_MQ_URL=amqp://rabbitmq:5672
+    networks:
+      - esdb_network
+
   #######################################################
   #  EventStoreDB
   #######################################################
-  eventstore.db:
+  esdb:
+    container_name: esdb
     image: eventstore/eventstore:21.10.8-buster-slim
     # use this image if you're running ARM-based proc like Apple M1
     # image: ghcr.io/eventstore/eventstore:21.10.0-alpha-arm64v8
@@ -31,17 +77,21 @@ services:
       - esdb_network
 
   mongodb:
+    container_name: mongodb
     image: mongo:5.0
     # environment:
     #     MONGO_INITDB_ROOT_USERNAME: root
     #     MONGO_INITDB_ROOT_PASSWORD: rootpassword
     ports:
-      - 27018:27017
+      - 27017:27017
     volumes:
       - mongodb-data:/data/db
       - mongodb-configdb:/data/configdb
+    networks:
+      - esdb_network
 
   mongo-express:
+    container_name: mongo-express
     image: mongo-express
     restart: always
     ports:
@@ -51,6 +101,57 @@ services:
       # ME_CONFIG_MONGODB_ADMINPASSWORD: example
       # ME_CONFIG_MONGODB_URL: mongodb://root:example@mongodb:27017/
       ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017/
+    networks:
+      - esdb_network
+
+  postgres:
+    container_name: postgres
+    image: postgres
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=changeme
+      - POSTGRES_DB=inventory
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    restart: always
+    command: postgres -c listen_addresses='*'
+    networks:
+      - esdb_network
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=pgadmin4@pgadmin.org
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    restart: always
+    ports:
+      - '3030:80'
+    depends_on:
+      - postgres
+    networks:
+      - esdb_network
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3.9-management
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - rabbitmq-log:/var/log/rabbitmq
+    restart: always
+    networks:
+      - esdb_network
 
 networks:
   esdb_network:
@@ -61,3 +162,7 @@ volumes:
   eventstore-volume-logs:
   mongodb-data:
   mongodb-configdb:
+  postgres:
+  pgadmin:
+  rabbitmq-data:
+  rabbitmq-log:

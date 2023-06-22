@@ -2,6 +2,7 @@ import { createChannel } from '../core/messageBroker';
 import { generateCorrelationId } from '../utils/generate';
 import createError from 'http-errors';
 import { ProductItem } from '../shoppingCarts/productItem';
+import { EXCHANGE_NAME, INVENTORY_SERVICE } from '../configs';
 
 export enum BusinessErrors {
   PRODUCTID_NOT_EXIST = 'PRODUCTID_NOT_EXIST',
@@ -49,7 +50,7 @@ export const requestProductIdExist = async (productId: string): Promise<boolean>
   return new Promise(async (resolve, reject) => {
     const channel = await createChannel();
 
-    await channel.assertExchange('ONLINE_SHOPPING_CART', 'direct', {
+    await channel.assertExchange(EXCHANGE_NAME, 'direct', {
       durable: true,
     });
     const correlationId = generateCorrelationId();
@@ -58,7 +59,7 @@ export const requestProductIdExist = async (productId: string): Promise<boolean>
       exclusive: true,
     });
 
-    channel.bindQueue(q.queue, 'ONLINE_SHOPPING_CART', 'INVENTORY_SERVICE');
+    channel.bindQueue(q.queue, EXCHANGE_NAME, INVENTORY_SERVICE);
     channel.consume(
       q.queue,
       (msg) => {
@@ -83,7 +84,7 @@ export const requestProductIdExist = async (productId: string): Promise<boolean>
     };
 
     const message = JSON.stringify(payload);
-    channel.publish('ONLINE_SHOPPING_CART', 'INVENTORY_SERVICE', Buffer.from(message), {
+    channel.publish(EXCHANGE_NAME, INVENTORY_SERVICE, Buffer.from(message), {
       correlationId,
       replyTo: q.queue,
     });
@@ -96,7 +97,7 @@ export const requestConfirmCart = async (
   return new Promise(async (resolve, reject) => {
     const channel = await createChannel();
 
-    await channel.assertExchange('ONLINE_SHOPPING_CART', 'direct', {
+    await channel.assertExchange(EXCHANGE_NAME, 'direct', {
       durable: true,
     });
     const correlationId = generateCorrelationId();
@@ -105,7 +106,7 @@ export const requestConfirmCart = async (
       exclusive: true,
     });
 
-    channel.bindQueue(q.queue, 'ONLINE_SHOPPING_CART', 'INVENTORY_SERVICE');
+    channel.bindQueue(q.queue, EXCHANGE_NAME, INVENTORY_SERVICE);
     channel.consume(
       q.queue,
       (msg) => {
@@ -130,7 +131,7 @@ export const requestConfirmCart = async (
     };
 
     const message = JSON.stringify(payload);
-    channel.publish('ONLINE_SHOPPING_CART', 'INVENTORY_SERVICE', Buffer.from(message), {
+    channel.publish(EXCHANGE_NAME, INVENTORY_SERVICE, Buffer.from(message), {
       correlationId,
       replyTo: q.queue,
     });

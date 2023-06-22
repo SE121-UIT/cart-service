@@ -1,7 +1,8 @@
 import amqplib, { Channel } from 'amqplib';
+import { RABBIT_MQ_URL, EXCHANGE_NAME } from '../configs';
 
 export const publishMessage = (channel: Channel, routingKey: string, msg: string) => {
-  channel.publish('ONLINE_SHOPPING_CART', routingKey, Buffer.from(msg));
+  channel.publish(EXCHANGE_NAME, routingKey, Buffer.from(msg));
   console.log('Sent', msg);
 };
 
@@ -11,11 +12,9 @@ const channelSingleton = (() => {
   async function createChannel(): Promise<Channel> {
     try {
       if (!instance) {
-        const connection = await amqplib.connect(
-          'amqps://nlpghfsl:tAsRiPJT9G5avar1fwH-ahUvJkRncdRX@gerbil.rmq.cloudamqp.com/nlpghfsl'
-        );
+        const connection = await amqplib.connect(RABBIT_MQ_URL);
         instance = await connection.createChannel();
-        await instance.assertQueue('ONLINE_SHOPPING_CART', {
+        await instance.assertQueue(EXCHANGE_NAME, {
           durable: true,
         });
       }

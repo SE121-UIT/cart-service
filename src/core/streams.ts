@@ -1,5 +1,3 @@
-import createError from 'http-errors';
-
 //////////////////////////////////////
 /// Getting the state from events
 //////////////////////////////////////
@@ -11,6 +9,8 @@ import {
   ResolvedEvent,
   StreamingRead,
 } from '@eventstore/db-client';
+import createError from 'http-errors';
+import { EVENT_STORE_DB_URL } from '../configs';
 
 export type ApplyEvent<Entity, E extends EventType> = (
   currentState: Entity | undefined,
@@ -37,9 +37,7 @@ let eventStore: EventStoreDBClient;
 
 export const getEventStore = (connectionString?: string) => {
   if (!eventStore) {
-    eventStore = EventStoreDBClient.connectionString(
-      connectionString ?? 'esdb://localhost:2113?tls=false'
-    );
+    eventStore = EventStoreDBClient.connectionString(connectionString ?? EVENT_STORE_DB_URL);
   }
 
   return eventStore;

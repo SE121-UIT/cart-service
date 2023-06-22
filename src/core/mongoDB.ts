@@ -1,5 +1,3 @@
-import createError from 'http-errors';
-
 //////////////////////////////////////
 /// MongoDB
 //////////////////////////////////////
@@ -13,12 +11,14 @@ import {
   SubscriptionResolvedEvent,
   SubscriptionToAll,
 } from './subscriptions';
+import createError from 'http-errors';
+import { MONGO_DB_URL } from '../configs';
 
 let mongoClient: MongoClient;
 
 export const getMongoDB = async (connectionString?: string): Promise<MongoClient> => {
   if (!mongoClient) {
-    mongoClient = new MongoClient(connectionString ?? 'mongodb://localhost:27017/');
+    mongoClient = new MongoClient(connectionString ?? MONGO_DB_URL);
     await mongoClient.connect();
   }
 

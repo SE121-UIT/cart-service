@@ -4,28 +4,32 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "npx nodemon",
+    "start:dev": "npx nodemon",
+    "start": "npm run build && node dist/index.js",
+    "build": "rimraf ./dist && tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:ts:watch": "tsc  --watch"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/amqplib": "^0.10.1",
+    "@types/express": "^4.17.17",
+    "@types/http-errors": "^2.0.1",
+    "@types/node": "^20.3.1",
+    "@types/uuid": "^9.0.2",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.3"
   },
   "dependencies": {
     "@eventstore/db-client": "^5.0.1",
-    "@types/amqplib": "^0.10.1",
-    "@types/express": "^4.17.17",
-    "@types/http-errors": "^2.0.1",
-    "@types/node": "^18.15.11",
-    "@types/uuid": "^9.0.1",
     "amqplib": "^0.10.3",
+    "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "http-errors": "^2.0.0",
     "mongodb": "^5.1.0",
     "nodemon": "^2.0.22",
+    "rimraf": "^5.0.1",
     "tsconfig-paths": "^4.2.0"
   }
 }
